@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Tour-operator-consumer
-Bundle-SymbolicName: tour-operator-consumer
+Bundle-SymbolicName: com.weatherguard.consumer.tour-operator
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: com.weatherguard.consumer.touroperator.consumer.TourOperatorConsumer
 Bundle-RequiredExecutionEnvironment: JavaSE-21
