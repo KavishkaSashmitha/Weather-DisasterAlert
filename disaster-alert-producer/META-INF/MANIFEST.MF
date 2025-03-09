@@ -4,6 +4,7 @@ Bundle-Name: Disaster Alert Producer
 Bundle-SymbolicName: com.tourismsafety.producer
 Bundle-Version: 1.0.0.qualifier
 Export-Package: com.weatherguard.producer.disasteralert.model,
+ com.weatherguard.producer.disasteralert.producer,
  com.weatherguard.producer.disasteralert.service
 Bundle-Activator: com.weatherguard.producer.disasteralert.producer.DisasterAlertProducer
 Bundle-RequiredExecutionEnvironment: JavaSE-21

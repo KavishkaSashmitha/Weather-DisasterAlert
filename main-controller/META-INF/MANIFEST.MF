@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Main-controller
+Bundle-SymbolicName: main-controller
+Bundle-Version: 1.0.0.qualifier
+Import-Package: com.weatherguard.consumer.touroperator.consumer,
+ com.weatherguard.producer.disasteralert.producer,
+ com.weatherguard.producer.disasteralert.service,
+ com.weatherguard.producer.weatherstation,
+ org.osgi.framework;version="[1.10.0,2.0.0)"
+Automatic-Module-Name: main.controller
+Bundle-RequiredExecutionEnvironment: JavaSE-21
