@@ -7,36 +7,27 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Scanner;
 
 public class TourOperatorConsumer implements BundleActivator {
     private ServiceReference<DisasterAlertService> serviceReference;
     private DisasterAlertService disasterAlertService;
     private Random random = new Random();
-    private Scanner scanner = new Scanner(System.in);
 
     @Override
     public void start(BundleContext context) throws Exception {
-        // Get the DisasterAlertService reference
+        // Locate the Disaster Alert Service
         serviceReference = context.getServiceReference(DisasterAlertService.class);
+        
         if (serviceReference != null) {
             disasterAlertService = context.getService(serviceReference);
-
-            // Example: Get the latest alert for a random city
-            String[] cities = {"Kandy", "Colombo", "Galle", "Jaffna", "Matara", "Anuradhapura", "Trincomalee"};
-            String randomCity = cities[new Random().nextInt(cities.length)];
-            DisasterAlert latestAlert = disasterAlertService.getLatestAlert(randomCity);
-
-            if (latestAlert != null) {
-                System.out.println("Latest Alert for " + randomCity + ": " + latestAlert);
-            } else {
-                System.out.println("No alerts found for " + randomCity);
-            }
+            
+            // Simulate checking alerts and adjusting tour schedules
+            monitorAlertsAndAdjustSchedules();
+        } else {
+            System.out.println("Disaster Alert Service not available");
         }
+        
         System.out.println("Tour Operator Consumer Bundle Started");
     }
 
@@ -49,7 +40,6 @@ public class TourOperatorConsumer implements BundleActivator {
         System.out.println("Tour Operator Consumer Bundle Stopped");
     }
 
-    
     private void monitorAlertsAndAdjustSchedules() {
         // Example locations to monitor
         String[] locations = {"Kandy", "Colombo", "Galle", "Sigiriya"};

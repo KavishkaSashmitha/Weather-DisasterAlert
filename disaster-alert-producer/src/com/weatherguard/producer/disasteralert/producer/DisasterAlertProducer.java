@@ -9,24 +9,10 @@ import org.osgi.framework.ServiceRegistration;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 public class DisasterAlertProducer implements DisasterAlertService, BundleActivator {
     private ServiceRegistration<?> serviceRegistration;
     private Map<String, DisasterAlert> alertRegistry = new HashMap<>();
-    private Random random = new Random();
-    
-    private String[] cities = {"Kandy", "Colombo", "Galle", "Jaffna", "Matara", "Anuradhapura", "Trincomalee"};
-    private String[] alertTypes = {"FLOOD", "STORM", "LANDSLIDE", "EARTHQUAKE", "TSUNAMI", "DROUGHT"};
-    private String[] severityLevels = {"LOW", "MEDIUM", "HIGH", "CRITICAL"};
-    private String[] descriptions = {
-        "Heavy flooding reported in central areas",
-        "Tropical storm approaching, heavy rain expected",
-        "Minor landslide risk in hill regions",
-        "Earthquake detected, potential aftershocks",
-        "Tsunami warning issued, coastal areas at risk",
-        "Severe drought conditions, water shortages expected"
-    };
 
     @Override
     public void start(BundleContext context) throws Exception {
@@ -36,9 +22,10 @@ public class DisasterAlertProducer implements DisasterAlertService, BundleActiva
             this, 
             null
         );
-     
-     // Broadcast a random alert when the bundle starts
-        broadcastRandomAlert();
+     // Broadcast some sample alerts
+//        broadcastAlert("Kandy", "FLOOD", "HIGH", "Heavy flooding reported in central areas");
+//        broadcastAlert("Colombo", "STORM", "MEDIUM", "Tropical storm approaching, heavy rain expected");
+        broadcastAlert("Galle", "LANDSLIDE", "LOW", "Minor landslide risk in hill regions");
         
         System.out.println("Disaster Alert Producer Bundle Started");    }
 
@@ -61,14 +48,5 @@ public class DisasterAlertProducer implements DisasterAlertService, BundleActiva
     @Override
     public DisasterAlert getLatestAlert(String location) {
         return alertRegistry.get(location);
-    }
-    
-    private void broadcastRandomAlert() {
-        String location = cities[random.nextInt(cities.length)];
-        String alertType = alertTypes[random.nextInt(alertTypes.length)];
-        String severityLevel = severityLevels[random.nextInt(severityLevels.length)];
-        String description = descriptions[random.nextInt(descriptions.length)];
-
-        broadcastAlert(location, alertType, severityLevel, description);
     }
 }
