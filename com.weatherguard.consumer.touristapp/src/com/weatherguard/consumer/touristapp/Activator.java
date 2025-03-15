@@ -1,145 +1,167 @@
 package com.weatherguard.consumer.touristapp;
 
-import com.weatherguard.producer.traveladvisor.model.TravelAdvisor;
-import com.weatherguard.producer.traveladvisor.service.TravelAdvisoryService;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.framework.ServiceRegistration;
+import com.weatherguard.producer.traveladvisor.TravelAdvisoryService;
 
-import java.util.List;
-import java.util.Scanner;
-
+/**
+ * Activator for Tourist App Consumer Bundle with proper OSGi Command support
+ */
 public class Activator implements BundleActivator {
     
-    private ServiceTracker<TravelAdvisoryService, TravelAdvisoryService> serviceTracker;
-    private Thread consumerThread;
-    private volatile boolean running = false;
+    private ServiceReference<?> serviceReference;
+    private TravelAdvisoryService travelAdvisoryService;
+    private ServiceRegistration<?> commandRegistration;
     
     @Override
     public void start(BundleContext context) throws Exception {
-        System.out.println("Starting Tourist App Consumer...");
+        System.out.println("Tourist App Consumer started.");
         
+        // Get the Travel Advisory Service
+        serviceReference = context.getServiceReference(TravelAdvisoryService.class.getName());
         
-        serviceTracker = new ServiceTracker<TravelAdvisoryService, TravelAdvisoryService>(
-            context, 
-            TravelAdvisoryService.class, 
-            null
-        ) {
-            @Override
-            public TravelAdvisoryService addingService(ServiceReference<TravelAdvisoryService> reference) {
-                TravelAdvisoryService service = super.addingService(reference);
-                System.out.println("Travel Advisory Service detected by Tourist App Consumer.");
-                return service;
-            }
+        if (serviceReference != null) {
+            travelAdvisoryService = (TravelAdvisoryService) context.getService(serviceReference);
+            System.out.println("Travel Advisory Service acquired successfully.");
             
-            @Override
-            public void removedService(ServiceReference<TravelAdvisoryService> reference, TravelAdvisoryService service) {
-                System.out.println("Travel Advisory Service removed. Tourist App waiting for service...");
-                super.removedService(reference, service);
-            }
-        };
+            // Register commands for the Tourist App
+            registerCommands(context);
+            
+            // Display initial menu
+            displayMenu();
+        } else {
+            System.out.println("Travel Advisory Service not available.");
+        }
+    }
+    
+    private void registerCommands(BundleContext context) {
+        // Create command implementation
+        TouristAppCommands commands = new TouristAppCommands(travelAdvisoryService);
         
-        serviceTracker.open();
+        // Prepare properties for command service registration
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("osgi.command.scope", "tourist");
+        props.put("osgi.command.function", new String[] { "menu", "info" });
         
-        running = true;
-        consumerThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                interactWithUser();
-            }
-        });
-        consumerThread.start();
+        // Register the command service with the OSGi service registry
+        // This registers the class under the OSGi Command service interface
+        commandRegistration = context.registerService(
+            Object.class.getName(),  // Register as generic Object
+            commands,                // The service implementation
+            props                    // Service properties for command
+        );
         
-        System.out.println("Tourist App Consumer started successfully!!!");
+        System.out.println("Tourist App commands registered:");
+        System.out.println("  tourist:menu - Display the main menu");
+        System.out.println("  tourist:info <category> - Show information for a category (0-4)");
+    }
+    
+    private void displayMenu() {
+        System.out.println("\n========== TOURIST APP ==========");
+        System.out.println("Available Travel Categories:");
+        
+        String[] categories = travelAdvisoryService.getCategories();
+        for (int i = 0; i < categories.length; i++) {
+            System.out.println((i) + ". " + categories[i]);
+        }
+        
+        System.out.println("\nCommands:");
+        System.out.println("tourist:menu - Show this menu again");
+        System.out.println("tourist:info <number> - Show details for a category (e.g., tourist:info 0)");
     }
     
     @Override
     public void stop(BundleContext context) throws Exception {
-        System.out.println("Stopping Tourist App Consumer...");
+        System.out.println("Tourist App Consumer stopping...");
         
-        running = false;
-        if (consumerThread != null) {
-            consumerThread.interrupt();
-            consumerThread.join(2000); 
+        // Unregister command service
+        if (commandRegistration != null) {
+            commandRegistration.unregister();
+            commandRegistration = null;
         }
         
-        if (serviceTracker != null) {
-            serviceTracker.close();
-            serviceTracker = null;
+        // Release the service
+        if (serviceReference != null) {
+            context.ungetService(serviceReference);
+            serviceReference = null;
+            travelAdvisoryService = null;
         }
         
         System.out.println("Tourist App Consumer stopped.");
     }
+}
+
+/**
+ * Command implementation for the Tourist App
+ * 
+ * Each public method becomes an available command
+ */
+class TouristAppCommands {
     
-  // handle user interaction and service consumption 
-    private void interactWithUser() {
-        Scanner scanner = new Scanner(System.in);
+    private TravelAdvisoryService travelAdvisoryService;
+    
+    public TouristAppCommands(TravelAdvisoryService travelAdvisoryService) {
+        this.travelAdvisoryService = travelAdvisoryService;
+    }
+    
+    /**
+     * Display the main menu
+     */
+    public void menu() {
+        System.out.println("\n========== TOURIST APP ==========");
+        System.out.println("Available Travel Categories:");
         
-        while (running) {
-            try {
-               
-                TravelAdvisoryService service = serviceTracker.getService();
+        String[] categories = travelAdvisoryService.getCategories();
+        for (int i = 0; i < categories.length; i++) {
+            System.out.println((i) + ". " + categories[i]);
+        }
+        
+        System.out.println("\nCommands:");
+        System.out.println("tourist:menu - Show this menu again");
+        System.out.println("tourist:info <number> - Show details for a category (e.g., tourist:info 0)");
+    }
+    
+    /**
+     * Show information about a specific travel category
+     * 
+     * @param categoryNumber The category number to display info for
+     */
+    public void info(String categoryNumber) {
+        try {
+            int category = Integer.parseInt(categoryNumber);
+            
+            if (category >= 0 && category < travelAdvisoryService.getCategories().length) {
+                String categoryName = travelAdvisoryService.getCategories()[category];
                 
-                if (service != null) {
-                   
-                    List<String> categories = service.getAvailableCategories();
-                    System.out.println("\n============= TOURIST APP =============");
-                    System.out.println("Welcome to the Tourist App!!!");
-                    System.out.println("Available travel locations:");
-                    
-                    for (int i = 0; i < categories.size(); i++) {
-                        System.out.println((i + 1) + ". " + categories.get(i));
-                    }
-                    
-                    System.out.println("\nEnter the number of location (or 'exit' to quit):");
-                    String input = scanner.nextLine().trim();
-                    
-                    if ("exit".equalsIgnoreCase(input)) {
-                        System.out.println("Thank you for using the Tourist App!");
-                        break;
-                    }
-                    
-                    String selectedCategory;
-                    try {
-                        int index = Integer.parseInt(input) - 1;
-                        if (index >= 0 && index < categories.size()) {
-                            selectedCategory = categories.get(index);
-                        } else {
-                            System.out.println("Invalid number. Please try again.");
-                            Thread.sleep(1000);
-                            continue;
-                        }
-                    } catch (NumberFormatException e) {
-                        selectedCategory = input.toLowerCase();
-                    }
-                    
-                    TravelAdvisor advisor = service.getRecommendations(selectedCategory);
-                    System.out.println("\n===== TRAVEL RECOMMENDATIONS AND SAFETY TIPS=====");
-                    System.out.println(advisor.toString());
-                    System.out.println("==================================\n");
-                    
-                    // Pause before next iteration
-                    System.out.println("Press Enter to continue...");
-                    scanner.nextLine();
-                    
-                } else {
-                    System.out.println("Waiting for Travel Advisory Service...");
-                    Thread.sleep(5000);
-                }
+                System.out.println("\n===== " + categoryName + " =====");
                 
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
+                System.out.println("\nRECOMMENDED DESTINATIONS:");
+                printArray(travelAdvisoryService.getRecommendedDestinations(category));
+                
+                System.out.println("\nRECOMMENDED ACTIVITIES:");
+                printArray(travelAdvisoryService.getRecommendedActivities(category));
+                
+                System.out.println("\nPOTENTIAL RISKS:");
+                printArray(travelAdvisoryService.getPotentialRisks(category));
+                
+                System.out.println("\nSAFETY TIPS:");
+                printArray(travelAdvisoryService.getSafetyTips(category));
+            } else {
+                System.out.println("Invalid category number. Valid options are 0-" + 
+                    (travelAdvisoryService.getCategories().length - 1));
             }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number (e.g., tourist:info 0)");
+        }
+    }
+    
+    private void printArray(String[] array) {
+        for (int i = 0; i < array.length; i++) {
+            System.out.println("- " + array[i]);
         }
     }
 }

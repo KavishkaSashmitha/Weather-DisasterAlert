@@ -1,38 +1,41 @@
 package com.weatherguard.producer.traveladvisor;
 
-import com.weatherguard.producer.traveladvisor.service.TravelAdvisoryService;
-import com.weatherguard.producer.traveladvisor.service.TravelAdvisoryServiceImpl;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
+/**
+ * Activator for Travel Advisory Producer Bundle
+ */
 public class Activator implements BundleActivator {
     
-    private ServiceRegistration<TravelAdvisoryService> serviceRegistration;
+    private ServiceRegistration<?> registration;
     
     @Override
     public void start(BundleContext context) throws Exception {
-        System.out.println("Starting Travel Advisory Producer service...");
+        System.out.println("Travel Advisory Producer started.");
         
+        // Create and register the service
         TravelAdvisoryService service = new TravelAdvisoryServiceImpl();
-        serviceRegistration = context.registerService(
-            TravelAdvisoryService.class, 
+        registration = context.registerService(
+            TravelAdvisoryService.class.getName(), 
             service, 
             null
         );
         
-        System.out.println("Travel Advisory Producer service registered successfully!!!");
+        System.out.println("Travel Advisory Service registered successfully.");
     }
     
     @Override
     public void stop(BundleContext context) throws Exception {
-        System.out.println("Stopping Travel Advisory Producer service...");
+        System.out.println("Travel Advisory Producer stopping...");
         
-        if (serviceRegistration != null) {
-            serviceRegistration.unregister();
-            serviceRegistration = null;
+        // Unregister the service
+        if (registration != null) {
+            registration.unregister();
+            registration = null;
         }
         
-        System.out.println("Travel Advisory Producer service stopped.");
+        System.out.println("Travel Advisory Producer stopped.");
     }
 }
